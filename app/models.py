@@ -5,9 +5,10 @@ from datetime import datetime
 
 class Users(db.Model):
     __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    username = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(128), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False)
     photo = db.Column(db.String(255), nullable=False)
@@ -45,10 +46,10 @@ class Profile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id_fk = db.Column(db.Integer,db.ForeignKey(Users.id),nullable=False)
     description = db.Column(db.String(255), nullable=False)
-    parish = db.Column(db.String(255), nullable=False)
-    biograhpy = db.Column(db.String(255), nullable=False)
-    sex = db.Column(db.String(255), nullable=False)
-    race = db.Column(db.String(255), nullable=False)
+    parish = db.Column(db.String(128), nullable=False)
+    biography = db.Column(db.String(255), nullable=False)
+    sex = db.Column(db.String(80), nullable=False)
+    race = db.Column(db.String(128), nullable=False)
     birth_year=db.Column(db.Integer,nullable=False)
     height=db.Column(db.Float,nullable=False)
     fav_cuisine=db.Column(db.String(128),nullable=False)
@@ -61,7 +62,7 @@ class Profile(db.Model):
     def __init__(self,description,parish,biography,sex,race, birth_year,height,fav_cuisine,fav_color,fav_school_subject,political,religious,family_oriented, user_id_fk):
         self.description = description
         self.parish = parish
-        self.biograhpy = biography
+        self.biography = biography
         self.sex = sex
         self.race = race
         self.birth_year = birth_year
