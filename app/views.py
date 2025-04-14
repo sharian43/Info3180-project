@@ -108,7 +108,7 @@ def create_profile():
 @app.route('/api/profiles/<int:profile_id>', methods=['GET'])
 def get_profile(profile_id):
     profile = Profile.query.get_or_404(profile_id)
-    return jsonify(profile.serialize())
+    return jsonify(profile)
 
 @app.route('/api/profiles/<int:user_id>/favourite', methods=['POST'])
 @login_required
@@ -174,6 +174,7 @@ def top_favourites(N):
 @login_manager.user_loader
 def load_user(id):
     return db.session.execute(db.select(Users).filter_by(id=id)).scalar()
+
 
 # Here we define a function to collect form errors from Flask-WTF
 # which we can later use
