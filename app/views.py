@@ -5,9 +5,12 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app import app
+import jwt
+import datetime
 from flask import render_template, request, jsonify, send_file
 import os
+import config
+from functools import wraps
 from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
@@ -20,6 +23,8 @@ from flask_wtf.csrf import generate_csrf
 ###
 # Routing for your application.
 ###
+
+SECRET_KEY = 'your-secret-key'
 
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
@@ -38,15 +43,34 @@ def index():
 @app.route('/api/register', methods=['POST'])
 def register():
     form = Signup()
+    UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
 
     if form.validate_on_submit():
+        
         username = form.username.data
-        password = generate_password_hash(form.password.data)
+        password = form.password.data
         name = form.name.data
         email = form.email.data
-        photo = form.photo.data.filename
+        photo = form.photo.data
         
-        new_user = Users(username, password, name, email, photo)
+        if Users.query.filter_by(username=username).first():
+            return jsonify({'error': 'Username already exists.'}), 409
+        if Users.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already exists.'}), 409
+        
+        filename = secure_filename(photo.filename)
+        photo_path = os.path.join(UPLOAD_FOLDER, filename)
+        try:
+            if not os.path.exists(UPLOAD_FOLDER):
+                os.makedirs(UPLOAD_FOLDER)
+            photo.save(photo_path)
+        except Exception as e:
+            print("Photo save error:", e)
+            return jsonify({'error': 'Failed to save photo.'}), 500
+    
+        hashed_password = generate_password_hash(password)
+        
+        new_user = Users(username=username, password=hashed_password, name=name, email=email, photo=filename)
         db.session.add(new_user)
         db.session.commit()
 
@@ -62,11 +86,42 @@ def login():
         user = Users.query.filter_by(username=form.username.data).first()
         if user and check_password_hash(user.password, form.password.data):
             login_user(user)
-            return jsonify({'message': 'Logged in successfully'}), 200
+            payload = {
+               'sub': user.id,
+               'name': user.username,
+               'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)  # Token expires in 1 hour
+            }
+            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+            return jsonify({'message': 'Logged in successfully', 'token': token}), 200
         return jsonify({'message': 'Invalid credentials'}), 401
     return jsonify({'errors': form.errors}), 400
 
+def token_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]  
+
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 403
+
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = Users.query.get(payload['sub'])
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Invalid token!'}), 401
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated_function
+
 @app.route('/api/auth/logout', methods=['POST'])
+@token_required
 @login_required
 def logout():
     logout_user()
@@ -78,6 +133,7 @@ def get_profiles():
     return jsonify([p.serialize() for p in profiles])  # Define serialize method
 
 @app.route('/api/profiles', methods=['POST'])
+@token_required
 @login_required
 def create_profile():
     form = Profiles()
@@ -111,6 +167,7 @@ def get_profile(profile_id):
     return jsonify(profile)
 
 @app.route('/api/profiles/<int:user_id>/favourite', methods=['POST'])
+@token_required
 @login_required
 def add_favourite(user_id):
     fav = Favourite(user_id_fk=current_user.id, fav_user_id_fk=user_id)
