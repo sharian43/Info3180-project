@@ -1,9 +1,11 @@
 # Add any form classes for Flask-WTF here
+from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, BooleanField, EmailField,IntegerField,FloatField
 from wtforms.validators import InputRequired, Email
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 
-class Signup(flaskForm):
+
+class Signup(FlaskForm):
     username = StringField('Username', validators=[InputRequired()])
     password = StringField('Password', validators=[InputRequired()])
     name=StringField('Name',validators=[InputRequired()])
@@ -17,7 +19,7 @@ class Login(FlaskForm):
 class Profiles(FlaskForm):
      description=TextAreaField('Description',validators=[InputRequired()])
      parish=StringField('Parish',validators=[InputRequired()])
-     biography=TextAreaField('Biography',validator=[InputRequired()])
+     biography=TextAreaField('Biography',validators=[InputRequired()])
      sex=StringField('Sex',validators=[InputRequired(message="Male or Female")])
      race=StringField('Race',validators=[InputRequired()])
      birth_year=IntegerField('Parish',validators=[InputRequired()])
