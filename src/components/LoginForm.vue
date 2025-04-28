@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {ref} from "vue";
 const successMessage = ref('');
 const errorMessages = ref([]);
 
