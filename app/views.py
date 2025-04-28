@@ -9,9 +9,8 @@ import jwt
 import datetime
 from flask import render_template, request, jsonify, send_file
 import os
-import config
 from functools import wraps
-from app import app, db, login_manager
+from app import app, db, login_manager, config
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename

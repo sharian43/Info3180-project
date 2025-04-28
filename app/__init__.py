@@ -8,6 +8,9 @@ from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:mysql@localhost/jamdate'
+
+
 csrf = CSRFProtect(app) 
 
 db = SQLAlchemy(app)
